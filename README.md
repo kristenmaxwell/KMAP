@@ -35,6 +35,7 @@ If you set up a four-point edit (IN and OUT points in both Source and Timeline),
 This feature uses the following hotkeys:
 
 SHIFT ,			Fit-to-Fill Insert Edit
+
 SHIFT .			Fit-to-Fill Overwrite Edit
 
 
@@ -49,6 +50,7 @@ If you've ever wanted to fly through your timeline, moving clips around at break
 This feature uses the following hotkeys:
 
 SHIFT X			Ripple Cut
+
 SHIFT V			Paste Insert (or if you prefer, "Ripple Paste")
 
 
@@ -85,16 +87,25 @@ And here's where this feature comes in handy. Rather than manually typing ".WIDE
 
 To instantly make a subclip with any ONE tag applied to its name, simply press its corresponding key:
 
-ALT 1			Create Subclip with Tag 1		Default: WIDE
-ALT 2			Create Subclip with Tag 2		Default: MED
-ALT 3			Create Subclip with Tag 3		Default: CU
-ALT 4			Create Subclip with Tag 4		Default: 2-SHOT
-ALT 5			Create Subclip with Tag 5		Default: OTS-A
-ALT 6			Create Subclip with Tag 6		Default: OTS-B
-ALT 7			Create Subclip with Tag 7		Default: MOVING
-ALT 8			Create Subclip with Tag 8		Default: RXN
-ALT 9			Create Subclip with Tag 9		Default: GOOD
-ALT 0			Create Subclip with Tag 10		Default: OUTTAKE
+ALT 1			Create Subclip with Tag 1					--- (Default: WIDE)
+
+ALT 2			Create Subclip with Tag 2					---	(Default: MED)
+
+ALT 3			Create Subclip with Tag 3						---	(Default: CU)
+
+ALT 4			Create Subclip with Tag 4						---	(Default: 2-SHOT)
+
+ALT 5			Create Subclip with Tag 5						---	(Default: OTS-A)
+
+ALT 6			Create Subclip with Tag 6						---	(Default: OTS-B)
+
+ALT 7			Create Subclip with Tag 7						---	(Default: MOVING)
+
+ALT 8			Create Subclip with Tag 8						---	(Default: RXN)
+
+ALT 9			Create Subclip with Tag 9						---	(Default: GOOD)
+
+ALT 0			Create Subclip with Tag 10					---	(Default: OUTTAKE)
 
 You are HIGHLY encouraged to customize these tags by editing the KMAP_options.ini file in the script's directory. Note that any spaces will be automatically stripped out for, um, technical reasons? And avoid special, non-alphanumeric characters so it doesn't break anything in AutoHotKey. 
 
@@ -114,6 +125,7 @@ This feature uses the following hotkeys:
 SHIFT CTRL U			Open Tag Selection Window
 
 F1 (while pressed) 		Open Tag Selection Window in Alternate mode
+
 F1 (when released)		Submit tags list, create subclip
 
 
