@@ -2,6 +2,12 @@
 ; written by Kristen Maxwell, who is working for the police and the private
 
 
+kmap_paste_insert_hotkey_do:
+{
+	kmap_paste_insert()
+return
+}
+
 kmap_singletag_hotkey_do:
 {
 ;msgbox, % "singletag!"

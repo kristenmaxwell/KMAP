@@ -10,7 +10,7 @@
 		tags[a_index] := kmap_settings[key]			; loop through and copy tag1 - tag10, from INI Settings --> the array tags[1] ... tags[10]
 	} ; end loop
 ; define hotkeys for Premiere functions (if enabled, based on settings in INI)	
-	kmap_makehotkeys(kmap_settings.enable_paste_insert, kmap_settings.paste_insert_hotkey, "kmap_paste_insert_hotkey_do")
+	kmap_makehotkeys(kmap_settings.enable_paste_insert, kmap_settings.paste_insert_hotkey, "kmap_paste_insert()")
 	kmap_makehotkeys(kmap_settings.enable_fit_to_fill, kmap_settings.fit_to_fill_insert_hotkey, "kmap_fit_to_fill_insert_hotkey_do")
 	kmap_makehotkeys(kmap_settings.enable_fit_to_fill, kmap_settings.fit_to_fill_overwrite_hotkey, "kmap_fit_to_fill_overwrite_hotkey_do")
 	kmap_makehotkeys(kmap_settings.enable_multitag_subclip, kmap_settings.multitag_hotkey, "kmap_multitag_hotkey_do")

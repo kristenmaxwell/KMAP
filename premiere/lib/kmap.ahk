@@ -28,6 +28,8 @@ kmap_options_ini_read() {
 ;
 enable_ripple_cut=1
 ripple_cut_hotkey=+x
+enable_paste_insert=1
+paste_insert_hotkey=+v
 enable_fit_to_fill=1
 fit_to_fill_insert_hotkey=+,
 fit_to_fill_overwrite_hotkey=+.
@@ -38,7 +40,7 @@ fit_to_fill_overwrite_hotkey=+.
 			pairs_headtail := "
 			(
 enable_review_head_tail=1
-review_head_tail_hotkey=+enter
+review_head_tail_hotkey=!enter
 frame_rate=30
 review_length=5
 			)"
@@ -48,10 +50,10 @@ review_length=5
 			pairs_singletag := "
 			(
 enable_single_tag_subclip=1
-single_tag_modifier=^
+single_tag_modifier=!
 single_tag_hotkeys=1,2,3,4,5,6,7,8,9,0
 single_tag_use_numpad=0
-single_tag_numpad_modifier=^
+single_tag_numpad_modifier=!
 			)"
 			iniwrite, %pairs_singletag%, kmap_options.ini, Single-Tag
 			
@@ -125,6 +127,12 @@ tag10=OUTTAKE
 	return settingsobj
 } ; end fn kmap_options_ini_read
 
+
+; function to perform a Paste Insert in Premiere
+kmap_paste_insert() {
+	WinMenuSelectItem, Adobe Premiere Pro,, Edit, Paste Insert 	; select Paste Insert from Edit Menu
+return
+}
 
 ; function to perform a "fit to fill" edit
 ; written by Kristen Maxwell, who has gone savage for teenagers with automatic weapons and boundless love

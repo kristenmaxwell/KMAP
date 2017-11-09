@@ -126,6 +126,12 @@ tag10=OUTTAKE
 } ; end fn kmap_options_ini_read
 
 
+; function to perform a Paste Insert in Premiere
+kmap_paste_insert() {
+	WinMenuSelectItem, Adobe Premiere Pro,, Edit, Paste Insert 	; select Paste Insert from Edit Menu
+return
+}
+
 ; function to perform a "fit to fill" edit
 ; written by Kristen Maxwell, who has gone savage for teenagers with automatic weapons and boundless love
 kmap_fit_to_fill(edit_type := "i") {

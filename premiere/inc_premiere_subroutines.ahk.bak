@@ -27,14 +27,6 @@ kmap_multitag_hotkey_do:  ;-----------------------when the user presses the hotk
 	if (!kmap_settings.enable_multitag_subclip) {		; short-circuit this hotkey if it is not enabled by setting in INI
 		return
 	} ; end if
-	; --- debug
-	WinMenuSelectItem, Adobe Premiere Pro,, Clip, Make Subclip... 
-	WinWaitActive, Make Subclip,, .3							  	; try to open the subclip window
-	if (errorlevel) {												; if the window doesn't open, 
-		return														; exit this subroutine
-	} ; end if
-	; --- debug
-	Winhide, Make Subclip											; hide the subclip window
 	gosub preparegui 									; make the gui	
 	gosub, resetguivalues 								; reset its values (unless its sticky)
 	gui, kmap_gui:Show, w478 h378, multitag_gui  		; show the GUI
@@ -282,10 +274,6 @@ kmap_gui_onClose: ; or if the gui is closed by the X button (?)
 	} ; end if
 	gui, kmap_gui:destroy	; when the gui is canceled or user hits ESC, the gui is destroyed without saving any values (unless sticky)
 	gui_canceled := 1 ; flag to inform the world at large that the user does not want to make a subclip after all. Sigh.
-	WinActivate, Adobe Premiere Pro		; force-reactivate main Premiere window
-	DetectHiddenWindows, On			
-	WinClose, Make Subclip				; close the Make Subclip window
-	DetectHiddenWindows, Off
 return
 	
 	
@@ -300,12 +288,7 @@ kmap_gui_onButtonOK: ; GUI OK button action
 	} ; end loop
 	if (checkboxes_sum > 0) { ; if they actually wanted to make a subclip...
 		kmap_subclip_with_multiple_tags() ; then it calls the function that actually makes the subclip and adds the tags specified in the GUI
-	} else {
-		WinActivate, Adobe Premiere Pro		; force-reactivate main Premiere window
-		DetectHiddenWindows, On			; if not, then just close the Make Subclip window
-		WinClose, Make Subclip
-		DetectHiddenWindows, Off
-	} ; end else
+	} ; end if
 return
 
 kmap_deadend:						; a place for hotkeys to go if their label is not defined or doesn't exist
