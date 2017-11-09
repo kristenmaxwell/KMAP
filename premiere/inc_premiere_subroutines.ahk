@@ -1,0 +1,297 @@
+; subroutines for Adobe Premiere features 
+; written by Kristen Maxwell, who is working for the police and the private
+
+
+kmap_singletag_hotkey_do:
+{
+;msgbox, % "singletag!"
+return
+	
+} ; end kmap_singletag_hotkey_do
+
+kmap_fit_to_fill_insert_hotkey_do: ; --------------when user presses hotkey to invoke fit_to_fill INSERT---------------
+{
+	kmap_fit_to_fill("i")
+return
+} ; end of kmap_fit_to_fill_overwrite_hotkey_do
+
+kmap_fit_to_fill_overwrite_hotkey_do: ; --------------when user presses hotkey to invoke fit_to_fill OVERWRITE---------------
+{
+	kmap_fit_to_fill("o")
+return
+} ; end of kmap_fit_to_fill_insert_hotkey_do
+
+
+kmap_multitag_hotkey_do:  ;-----------------------when the user presses the hotkey to invoke the multitag GUI----------------------
+{
+	if (!kmap_settings.enable_multitag_subclip) {		; short-circuit this hotkey if it is not enabled by setting in INI
+		return
+	} ; end if
+	gosub preparegui 									; make the gui	
+	gosub, resetguivalues 								; reset its values (unless its sticky)
+	gui, kmap_gui:Show, w478 h378, multitag_gui  		; show the GUI
+	return
+} ; end of kmap_multitag_hotkey_do
+
+kmap_multitag_alt_hotkey_do: ;-----------------------when the user presses the ALTERNATE hotkey to invoke the multitag GUI----------------------
+{
+	checkboxes_sum := 0 									; init var to hold count of # of checkboxes that were activated
+	gosub preparegui 										; make the gui, kmap_gui:behind the scenes
+	gosub, resetguivalues 									; reset its values (unless its sticky)
+	gui, kmap_gui:Show, w478 h378, multitag_gui				; show the GUI at the specified size
+	gui_canceled := 0 										; init flag that tells if the GUI was canceled with escape or x button or OK button
+	KeyWait, % kmap_settings["multitag_alternate_hotkey"]	; wait for hotkey to be released
+	if !winexist("multitag_gui") {		
+		return 												; if the gui has been closed by any means (including hitting OK/Enter), skip the rest of this fn, 
+															; because it has already been handled via other subroutines
+	} ; end if		
+	gui, kmap_gui:submit 									; when f1 is released, the varaibles are saved
+	kmap_shitbird() 										; pseudoarray shenanigans
+	gui, kmap_gui:destroy 									; then the window is destroyed
+	loop, 10 { 												; then we check to see if any checkboxes were active
+		checkboxes_sum := checkboxes_sum + multitag[a_index] ; sum will be 0 if all checkboxes are unchecked
+	} ; end loop
+
+; the gui_canceled flag gets set in the preparegui subroutine, as the action taken when user hits escape or the cancel button is clicked
+
+if (gui_canceled <> 1) and (checkboxes_sum > 0) { 			; if they actually wanted to make a subclip...
+		kmap_subclip_with_multiple_tags() 					; then it calls the function that actually makes the subclip and adds the tags specified in the GUI
+	} ; end if
+			
+return
+} ; end of kmap_multitag_alt_hotkey_do
+
+kmap_ripple_cut_hotkey_do: ;----------------------- when user presses hotkey to perform a Ripple Cut-------------------
+{
+	;------------------------------------	
+	; Ripple Cut 
+	;------------------------------------
+	; copies the selected clip, then ripple deletes it. Handy when used with the built-in Paste Insert function. 
+	; I map Paste Insert to Shift V, so i can easily ripple cut/paste insert clips around the timeline.
+
+	WinMenuSelectItem, Adobe Premiere Pro, , Edit, Copy ; copies the current clip via menu 
+		WinMenuSelectItem, Adobe Premiere Pro, , Edit, Ripple Delete ; ripple deletes the current clip via menu 
+	return
+} ; end of kmap_ripple_delete_hotkey_do
+
+kmap_review_head_tail_hotkey_do: ;----------------when user presses hotkey to perform a head-tail review
+{
+	;------------------------------------	
+	; Play Head and Tail -- keypad method
+	;------------------------------------
+	; shows quickly how well an inserted clip matches with surrounding clips, playing just a few seconds around both edges of the clip.
+	; KNOWN ISSUES: 
+	;--only works with clips with a duration longer than the variable "review_length." I don't know of any way around this
+	; since we can't get the clip duration from premiere AFAIK. If your "review_length" is longer than the clip you're working with, 
+	; the macro will correctly play around the head of your clip, but then it will jump ahead and play around the tail of the NEXT clip instead. 
+	;
+
+	Send {Up} ;jump to prev edit
+	WinMenuSelectItem, Adobe Premiere Pro, , Edit, Deselect All ; deselects any clips in the timeline so that they don't get shifted via keypad timecode entry
+	; the following line uses the numeric keypad to enter the seconds and frames to jump back from the current edit
+	; these values are initialized in the AUTOEXEC portion of the script
+	Send {NumpadSub}{Numpad%review_seconds%}{NumpadDot}{Numpad%review_frames_tens%}{Numpad%review_frames_ones%}{NumpadEnter} 
+	Sleep 100 ; tiny pause to make sure Premeire is caught up and ready for further commands
+	Send {l} ; play
+	Sleep %review_length%000 ; wait while premiere plays the portion around the edit
+	Send {k} ; pause
+	Sleep 2000 ; optional-- two-second breather before jumping ahead to the next edit 
+	Send {Down} ; jump to next edit
+	; the following line uses the numeric keypad to enter the seconds and frames to jump back from the current edit
+	Send {NumpadSub}{Numpad%review_seconds%}{NumpadDot}{Numpad%review_frames_tens%}{Numpad%review_frames_ones%}{NumpadEnter} 
+	Sleep 100 ; tiny pause to make sure Premeire is caught up and ready for further commands
+	Send {l} ;play
+	Sleep %review_length%000 ; wait while premiere plays the portion around the edit
+	Send {k} ;pause
+Return
+} ; end of kmap_review_head_tail_hotkey_do
+
+
+
+defineguihotkeys: ; used to define the hotkeys used in the multi-tag GUI
+{
+	currentkey := SubStr(A_ThisHotkey, 0, 1) ; this grabs just the last character-- basically so "1" and "numpad1" work the same
+	if (currentkey == 0) {  ; translates 0 key to a value of 10 for use with array
+		index :=10
+	} else {
+		index := currentkey
+	} ; end else
+	GuiControlGet, togglevar, kmap_gui:, multitag_pa%index% ; get the state (0/1) of the checkbox for tag, put it in togglevar
+	gui, kmap_gui:font, % (togglevar := !togglevar) ? "bold" : "norm" ; invert togglevar and set the gui's font-boldness based on it
+	guicontrol, kmap_gui:font, multitag_pa%index% ; updates the font (bold) of the checkbox's label text
+	GuiControl, kmap_gui:, multitag_pa%index%, % togglevar ; pushes the new, toggled value into the control (check/uncheck)
+	kmap_shitbird() ; perform a shitbird to copy pseudoarray into array. yay!
+return
+} ; end of defineguihotkeys
+
+
+
+preparegui:	; --------------------- make the GUI for Multi-Tag Subclip --------------------
+{	
+	; this gets called whenever the GUI is invoked (since it gets destroyed after it is finished or canceled,
+	; because I made it, and I enjoy breaking it as well.)
+	; first let's declare some variables pertaining to the button layout, so they're easy to change later!
+	gui_column1_x := 23 ; x offset for first column of checkboxes
+	gui_column2_x := 180 ; x offset for second column of checkboxes
+	gui_buttons_top := 60 ; y position for top button in each column
+	gui, kmap_gui:new, +Labelkmap_gui_on +Hwndkmap_hwnd, multitag_gui ; destroys old kmap_gui, makes a new one, uses custom subroutine labels
+	gui, kmap_gui:Font, S10 CDefault, Verdana ; sets the font size, color, typeface, etc
+	;gui, kmap_gui:-Caption ; gets rid of the window's title bar
+	gui_column_buttons_top := gui_buttons_top ; init / reset button top position
+	gui_column_x := gui_column1_x ; before we loop, set checkboxes position to be in first column
+
+	loop, 10 {
+		if (A_index == 6) { ; change some position vars when we're in the second column
+			gui_column_x := gui_column2_x ; use second column position for checkboxes
+			gui_column_buttons_top := gui_buttons_top ; reset button top position for second column
+		} ; end if
+		newindex := substr(a_index, 0, 1) ; get just the last digit of the index (1...9, 0)
+		tempvarname := "multitag_pa" . A_Index ; setup name for pseudoarray, b/c gui only supports plain vars, and is also a shitbird
+		%tempvarname% := multitag[a_index] ; copy actual array's value to pseudoarray, again b/c of shitbirdness
+		gui, kmap_gui:add, checkbox																		
+		, v%tempvarname% gcheckbold x%gui_column_x% y%gui_column_buttons_top% w120 h30		; button options
+		, % "[" . newindex . "] " . tags[a_index]                                               ; button label text
+		gui_column_buttons_top +=35 ; put vert space before next button                         ; put vert space before next button
+	} ; end loop
+	
+	gui, kmap_gui:add, checkbox, checked0 vguiall ggui_click_select_all xm+5 y280 w300, % "[A] Check / Uncheck All"
+		
+	; do stuff relating to the "sticky" status, AKA "Remember my selection"	
+	if gui_sticky { ; if gui is set to "remember" then the remember option needs to start off "ticked"
+		gui, kmap_gui:add, Checkbox, checked1 vgui_sticky xm+5 y331 w300, [R]emember my selections ; force "ticked"
+		; now let's looop through the checkboxes to force the ones that were used last time to be cecked and bolded
+		loop, 10 {
+			;i := SubStr(a_index, 0,1) ; grab the last character of the loop index (basically makes it 1...9, 0)
+			if (multitag[a_index]) {
+ 				gui, kmap_gui:font, bold ; if the box was checked, it will get a bolding... a serious, vigorous bolding.
+			} ; end if multitag%i% == 1
+			guicontrol, kmap_gui:,multitag_pa%a_index%, % (multitag[a_index] == 1) ; set the checked state of the control to 0/1 based on the var's contents
+			guicontrol, kmap_gui:font, multitag_pa%a_index% ; force checked items to be bolded
+			gui, kmap_gui:font, norm
+		} ; end loop
+	} else { ; if gui is not sticky
+		gui, kmap_gui:add, Checkbox, checked0 vgui_sticky ggui_click_remember xm+5 y310 w300, [R]emember my selections ; force unchecked
+	} ; end else
+	; end of "sticky" stuff
+
+	; now lets add the title and the OK button
+	gui, kmap_gui:Add, Text, x3 y1 w470 h20 , Subclip with these labels: ; title text		
+	gui, kmap_gui:font, s9
+	gui, kmap_gui:Add, Text, x3 y20 , Press the number keys (1 - 0) to toggle each corresponding tag ; instruction text
+	gui, kmap_gui:font, s10
+	gui, kmap_gui:Add, Button, x370 y330 w90 h30 gkmap_gui_onButtonOK default , OK ; makes the OK / Submit button
+	gui, kmap_gui:Add, button, x275 y330 w90 h30 gkmap_gui_onButtonCancel, Cancel ; makes the CANCEL button, for when things are NOT OK.
+return 
+} ; end of preparegui
+
+checkbold: ;------------------------when a checkbox gets ticked---------------------------
+	gui, kmap_gui:submit, nohide ; save variables, keep GUI window open
+	kmap_shitbird() ; pseudoarray -> array
+	gui, kmap_gui:font, % (%A_GuiControl%) ? "bold" : "norm" ; set font based on value of checkbox variable
+	guicontrol, kmap_gui:font, %A_GuiControl% ; push the bold/norm state to the checkbox
+	guicontrol, kmap_gui:movedraw, %A_GuiControl% ; force refresh of the checkbox visuals
+	gui, kmap_gui:font, norm ; reset font back to normal
+return
+
+resetguivalues: ; --------------optionally clear the tags selected in the GUI each time it is invoked -----------
+	if !gui_sticky { ; defined in autoexec -- if gui is not set to sticky, then set all GUI checkboxes back to 0
+		;multitag0 := 0 ; because the loop won't start at 0, do this one manually
+		loop, 10 {
+			multitag[a_index] := 0 ; set each checkbox in turn to 0
+		} ; end loop
+	} ; end if !gui_sticky
+return ; end of resetguivalues
+
+
+
+gui_click_select_all: ; ------------- when user clicks select-all checkbox ----------------------------
+	gui, kmap_gui:submit, nohide ; save variables, keep GUI window open
+	kmap_shitbird() ; pa4evar
+	gui, kmap_gui:font, % (guiall) ? "bold" : "norm" ; set font based on value of guiall variable
+	guicontrol, kmap_gui:font, guiall ; push the bold/norm state to Select All checkbox
+	guicontrol, kmap_gui:movedraw, guiall ; force refresh of the select all checkbox visuals
+	gosub, gui_toggle_all_tags ; go do the "toggle all checkboxes" stuff
+	gui, kmap_gui:font, norm ; reset gui font status to normal for subsequent actions
+return ; end gui_click_select_all
+
+gui_toggle_all_tags: ; ------------set all tags in GUI to either checked or unchecked ------------------
+	gui, kmap_gui:font, % (guiall) ? "bold" : "norm" ; if guiall = 1 then bold everything, else norm everything
+	loop, 10 {
+		;i := SubStr(a_index, 0,1) ; grab the last character of the loop index (basically makes it 1...9, 0)
+		multitag[a_index] := guiall ; set each checkbox's variable to the same as the "select all" control (0 or 1)
+		multitag_pa%a_index% := multitag[a_index] ; and push into gui var
+		guicontrol, kmap_gui:font, multitag_pa%a_index% ; update the font for the current checkbox
+		guicontrol, kmap_gui:,multitag_pa%a_index%, % guiall ; set checked state of curernt checkbox to 0 or 1
+	} ; end loop
+	gui, kmap_gui:font, norm ; reset gui font to normal
+return ; end of guitoggleall 
+
+
+execute_gui_all_hotkey: ;-------------------- what happens when user pushes hotkey for "select all" in GUI -----------------
+		GuiControlGet, togglevar, kmap_gui:, guiall ; get the state (0/1) of the select/deselect all checkbox
+		togglevar := !togglevar ; invert togglevar 
+		gui, kmap_gui:font, % (togglevar) ? "bold" : "norm" ; set the gui's font-boldness based on togglevar
+		guicontrol, kmap_gui:font, guiall ; updates the font (bold or norm) of the select-all checkbox's label text
+		guicontrol, kmap_gui:,guiall, % togglevar ; pushes the new, toggled value into the select-all control
+		guicontrol, kmap_gui:movedraw, guiall ; force refresh of the "select all" control visuals
+		gui, kmap_gui:font, norm ; just in case, lets set the gui's font back to normal
+		gui, kmap_gui:submit, nohide ; save gui variables and keep the gui window open
+		kmap_shitbird() ; because the bird is the word
+		; now we need to loop through all the individual checkboxes and select/deselect them...
+		gosub, gui_toggle_all_tags ; go do the "toggle all checkboxes" stuff
+return ; end of execute_gui_all_hotkey
+
+
+execute_gui_remember_hotkey: ; ---------------------what happens when user pushes hotkey for "remember selections" in GUI --------------------
+		GuiControlGet, togglevar, kmap_gui:, gui_sticky ; get the state (0/1) of the "remember" checkbox
+		togglevar := !togglevar ; invert togglevar 
+		gui, kmap_gui:font, % (togglevar) ? "bold" : "norm" ; set the gui's font-boldness based on togglevar
+		guicontrol, kmap_gui:font, gui_sticky ; updates the font (bold) of the "remember" checkbox's label text
+		guicontrol, kmap_gui:,gui_sticky, % togglevar ; pushes the new, toggled value into the select-all control
+		gui, kmap_gui:font, norm ; just in case, lets set the gui's font back to normal
+		gui, kmap_gui:submit, nohide ; save gui variables and keep the gui window open
+		kmap_shitbird() ; the bird says "mum"
+		guicontrol, kmap_gui:movedraw, gui_sticky ; force refresh the "remember" control visuals
+return ; end execute_gui_remember_hotkey
+
+
+gui_click_remember: ; -----------------what happens when user click "remember" check box ---------------------
+	gui, kmap_gui:submit, nohide ; save gui variables, keep GUI window open
+	kmap_shitbird() ; caw caw BANG fuck, I'm dead!
+	gui, kmap_gui:font, % (gui_sticky) ? "bold" : "norm" ; set font based on value of gui_sticky variable
+	guicontrol, kmap_gui:font, gui_sticky ; update font style on gui_sticky control 
+	guicontrol, kmap_gui:movedraw, gui_sticky ; force redraw the gui_sticky control
+	gui, kmap_gui:font, norm ; set gui font back to normal
+return ; end gui_click_remember
+
+
+kmap_gui_onButtonCancel: ; if user clicks the "cancel" button
+kmap_gui_onEscape: ; standard GUI action -- if user presses Escape
+kmap_gui_onClose: ; or if the gui is closed by the X button (?)
+	if gui_sticky {
+		gui, kmap_gui:submit ; save variables if "remember" is checked, i.e. gui is sticky
+		kmap_shitbird() ; deal with pseudoarray bullshit
+	} ; end if
+	gui, kmap_gui:destroy	; when the gui is canceled or user hits ESC, the gui is destroyed without saving any values (unless sticky)
+	gui_canceled := 1 ; flag to inform the world at large that the user does not want to make a subclip after all. Sigh.
+return
+	
+	
+kmap_gui_onButtonOK: ; GUI OK button action
+	gui, kmap_gui:Submit ; when the user clicks Enter or presses OK, the gui saves the values of all the checkboxes
+	kmap_shitbird() ; deal with pseudoarray bullshit 
+	gui, kmap_gui:destroy ; and then destroys the GUI
+	checkboxes_sum := 0 ; init value of sum of checkboxes -- we'll use this to see if any tags were selected
+	loop, 10 { ; then we check to see if any checkboxes were active
+		;i := SubStr(a_index, 0, 1) ; 1...9, 0
+		checkboxes_sum := checkboxes_sum + multitag[a_index] ; sum will be 0 if all checkboxes are unchecked
+	} ; end loop
+	if (checkboxes_sum > 0) { ; if they actually wanted to make a subclip...
+		kmap_subclip_with_multiple_tags() ; then it calls the function that actually makes the subclip and adds the tags specified in the GUI
+	} ; end if
+return
+
+kmap_deadend:						; a place for hotkeys to go if their label is not defined or doesn't exist
+	msgbox, % "hotkey definer couldn't find your destination label"
+return
+; end of subroutines for premiere stuff
