@@ -19,7 +19,7 @@ In the INI file, you can enable/disable any feature. Simply look for the relevan
 
 Likewise, you can redefine which hotkeys are used for each feature-- but you have to be careful with this as it's pretty easy to break things if you define your hotkeys incorrectly. I'm not a good enough programmer to make the script impervious to data entry errors, so you'll have to help me out by providing valid input in the INI file. 
 
-for q quick reference about hotkey prefixes (to add modifier keys), see https://autohotkey.com/docs/Hotkeys.htm#Symbols
+for a quick reference about hotkey prefixes (to add modifier keys), see https://autohotkey.com/docs/Hotkeys.htm#Symbols
 
 for a list of the names of all the keys that can be defined in AHK, see 
 https://autohotkey.com/docs/KeyList.htm#Keyboard
