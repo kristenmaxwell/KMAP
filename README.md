@@ -77,6 +77,9 @@ ALT ENTER 		Review Head and Tail of clip at playhead
 
 Subclip Tagging:
 ----------------
+SEE IT IN ACTION: https://youtu.be/iES82jRBLUU
+
+
 This is actually two separate features that share a common premise-- using snippets of text in a subclip's name to act as "tags" to aid in organization.
 
 The Problem-- Premiere's subclipping feature leaves a lot to be desired when it comes to organization. You can't really control where subclips are created, and it's kind of a chore to wrangle them into any sense of order.
